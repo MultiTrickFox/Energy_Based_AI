@@ -8,9 +8,10 @@ using Knet: sigm
 ## PARAMS
 
 
-max_update_steps          = 200
-boltzmann_full_restricted = false
-debug                     = true
+max_update_steps             = 5_000
+
+boltzmann_full_restricted    = true
+boltzmann_hm_initial_configs = 15
 
 
 ## BASIC STRUCTS
@@ -75,7 +76,7 @@ mutable struct Hopfield
         for i in 1:in_size
             for j in i+1:in_size
                 edge1 = Edge_Sym(nodes[i], nodes[j])
-                edge2 = Edge_Sym(nodes[j], nodes[i])
+                edge2 = Edge_Sym(nodes[j], nodes[i], weight=edge1.weight)
                 edge1.edge_sym = edge2
                 edge2.edge_sym = edge1
                 push!(edges, edge1)
@@ -96,7 +97,7 @@ mutable struct Boltzmann
     hiddens
     edges
 
-    Boltzmann(in_size, hidden_size) = begin
+    Boltzmann(in_size, hidden_size; full_restricted=boltzmann_full_restricted) = begin
 
         visibles = [Node() for _ in 1:in_size]
         hiddens = [Node() for _ in 1:hidden_size]
@@ -105,7 +106,7 @@ mutable struct Boltzmann
         for i in 1:in_size
             for j in 1:hidden_size
                 edge1 = Edge_Sym(visibles[i], hiddens[j])
-                edge2 = Edge_Sym(hiddens[j], visibles[i])
+                edge2 = Edge_Sym(hiddens[j], visibles[i], weight=edge1.weight)
                 edge1.edge_sym = edge2
                 edge2.edge_sym = edge1
                 push!(edges, edge1)
@@ -115,12 +116,12 @@ mutable struct Boltzmann
             end
         end
 
-        if !boltzmann_full_restricted
+        if !full_restricted
 
             for i in 1:hidden_size
                 for j in i+1:hidden_size
                     edge1 = Edge_Sym(hiddens[i], hiddens[j])
-                    edge2 = Edge_Sym(hiddens[j], hiddens[i])
+                    edge2 = Edge_Sym(hiddens[j], hiddens[i], weight=edge1.weight)
                     edge1.edge_sym = edge2
                     edge2.edge_sym = edge1
                     push!(edges, edge1)
@@ -162,7 +163,7 @@ begin
         current_states = [node.state for node in hopfield.nodes]
 
         if current_states == last_states
-            return current_states
+            break
         else
             last_states = current_states
             ctr +=1
@@ -186,13 +187,13 @@ begin
 
         for node in shuffle(hopfield.nodes)
             prob = sigm(sum([edge.weight * edge.node_to.state for edge in node.edges])/temperature)
-            randn() <= prob ? node.state = 1 : node.state = -1
+            randn() <= prob ? node.state = 1.0 : node.state = -1.0
         end
 
         current_states = [node.state for node in hopfield.nodes]
 
         if current_states == last_states
-            return current_states
+            break
         else
             last_states = current_states
             ctr +=1
@@ -207,146 +208,186 @@ end
     # Binary Boltzmann
 
 
-binary_update_thermal_hiddens(boltzmann::Boltzmann, input, temperature; hm_average=10, update_steps=max_update_steps) =
+binary_update_thermal_hiddens(boltzmann::Boltzmann, input, temperature; update_steps=max_update_steps, hm_average=boltzmann_hm_initial_configs) =
 begin
 
     for (node, inp) in zip(boltzmann.visibles, input)
         node.state = inp
     end
 
-    for node in boltzmann.hiddens
-        node.state = round(rand())
-    end
+    final_states = [.0 for _ in 1:length(boltzmann.hiddens)]
 
-    last_states, ctr = nothing, 0
+    for _ in 1:hm_average
 
-    while ctr <= update_steps
-
-        for node in shuffle(boltzmann.hiddens)
-            prob = sigm(sum([edge.weight * edge.node_to.state for edge in node.edges])/temperature)
-            randn() <= prob ? node.state = 1 : node.state = -1
+        for node in boltzmann.hiddens
+            node.state = round(rand())
         end
 
-        current_states = [node.state for node in boltzmann.hiddens]
+        last_states, ctr = nothing, 0
 
-        if current_states == last_states
-            return last_states
-        else
-            last_states = current_states
-            ctr +=1
+        while ctr <= update_steps
+
+            for node in shuffle(boltzmann.hiddens)
+                prob = sigm(sum([edge.weight * edge.node_to.state for edge in node.edges])/temperature)
+                randn() <= prob ? node.state = 1 : node.state = -1
+            end
+
+            current_states = [node.state for node in boltzmann.hiddens]
+
+            if current_states == last_states
+                break
+            else
+                last_states = current_states
+                ctr +=1
+            end
+
         end
+
+        final_states += last_states
 
     end
 
-last_states
+    final_states /= hm_average
+
+final_states
 end
 
-binary_update_thermal_visibles(boltzmann::Boltzmann, hiddens, temperature; hm_average=10, update_steps=max_update_steps) =
+binary_update_thermal_visibles(boltzmann::Boltzmann, hiddens, temperature; update_steps=max_update_steps, hm_average=update_steps=max_update_steps) =
 begin
 
     for (node, hidden) in zip(boltzmann.hiddens, hiddens)
         node.state = hidden
     end
 
-    for node in boltzmann.input
-        node.state = round(rand())
-    end
+    final_states = [.0 for _ in 1:length(boltzmann.visibles)]
 
-    last_states, ctr = nothing, 0
+    for _ in 1:hm_average
 
-    while ctr <= update_steps
-
-        for node in shuffle(boltzmann.visibles)
-            prob = sigm(sum([edge.weight * edge.node_to.state for edge in node.edges])/temperature)
-            randn() <= prob ? node.state = 1 : node.state = -1
+        for node in boltzmann.input
+            node.state = round(rand())
         end
 
-        current_states = [node.state for node in boltzmann.visibles]
+        last_states, ctr = nothing, 0
 
-        if current_states == last_states
-            return last_states
-        else
-            last_states = current_states
-            ctr +=1
+        while ctr <= update_steps
+
+            for node in shuffle(boltzmann.visibles)
+                prob = sigm(sum([edge.weight * edge.node_to.state for edge in node.edges])/temperature)
+                randn() <= prob ? node.state = 1 : node.state = -1
+            end
+
+            current_states = [node.state for node in boltzmann.visibles]
+
+            if current_states == last_states
+                break
+            else
+                last_states = current_states
+                ctr +=1
+            end
+
         end
+
+        final_states += last_states
 
     end
 
-last_states
+    final_states /= hm_average
+
+final_states
 end
 
 
     # Continuous Boltzmann
 
 
-continuous_update_thermal_hiddens(boltzmann::Boltzmann, input, temperature; hm_average=10, update_steps=max_update_steps) =
+continuous_update_thermal_hiddens(boltzmann::Boltzmann, input, temperature; update_steps=max_update_steps, hm_average=update_steps=max_update_steps) =
 begin
 
     for (node, inp) in zip(boltzmann.visibles, input)
         node.state = inp
     end
 
-    for node in boltzmann.hiddens
-        node.state = randn()
-    end
+    final_states = [0 for _ in 1:length(boltzmann.hiddens)]
 
-    last_states, ctr = nothing, 0
+    for _ in 1:hm_average
 
-    while ctr <= update_steps
-
-        for node in shuffle(boltzmann.hiddens)
-            node.state = sigm(sum([edge.weight * edge.node_to.state for edge in node.edges])/temperature)
+        for node in boltzmann.hiddens
+            node.state = randn()
         end
 
-        current_states = [node.state for node in boltzmann.hiddens]
+        last_states, ctr = nothing, 0
 
-        if current_states == last_states
-            return last_states
-        else
-            last_states = current_states
-            ctr +=1
+        while ctr <= update_steps
+
+            for node in shuffle(boltzmann.hiddens)
+                node.state = sigm(sum([edge.weight * edge.node_to.state for edge in node.edges])/temperature)
+            end
+
+            current_states = [node.state for node in boltzmann.hiddens]
+
+            if current_states == last_states
+                break
+            else
+                last_states = current_states
+                ctr +=1
+            end
+
         end
+
+        final_states += last_states
 
     end
 
-last_states
+    final_states /= hm_average
+
+final_states
 end
 
-continuous_update_thermal_visibles(boltzmann::Boltzmann, hiddens, temperature; hm_average=10, update_steps=max_update_steps) =
+continuous_update_thermal_visibles(boltzmann::Boltzmann, hiddens, temperature; update_steps=max_update_steps, hm_average=update_steps=max_update_steps) =
 begin
 
     for (node, hidden) in zip(boltzmann.visibles, hiddens)
         node.state = hidden
     end
 
-    for node in boltzmann.visibles
-        node.state = randn()
-    end
+    final_states = [.0 for _ in 1:length(boltzmann.visibles)]
 
-    last_states, ctr = nothing, 0
+    for _ in 1:length(boltzmann.visibles)
 
-    while ctr <= update_steps
-
-        for node in shuffle(boltzmann.visibles)
-            node.state = sigm(sum([edge.weight * edge.node_to.state for edge in node.edges])/temperature)
+        for node in boltzmann.visibles
+            node.state = randn()
         end
 
-        current_states = [node.state for node in boltzmann.visibles]
+        last_states, ctr = nothing, 0
 
-        if current_states == last_states
-            return last_states
-        else
-            last_states = current_states
-            ctr +=1
+        while ctr <= update_steps
+
+            for node in shuffle(boltzmann.visibles)
+                node.state = sigm(sum([edge.weight * edge.node_to.state for edge in node.edges])/temperature)
+            end
+
+            current_states = [node.state for node in boltzmann.visibles]
+
+            if current_states == last_states
+                break
+            else
+                last_states = current_states
+                ctr +=1
+            end
+
         end
+
+        final_states += last_states
 
     end
 
-last_states
+    final_states /= hm_average
+
+final_states
 end
 
 
-    # Hebbian Learners
+# HEBBIAN OPERATORS
 
 
 hebbian_grads(hopfield::Hopfield) =
@@ -358,44 +399,21 @@ end
 hebbian_grads(boltzmann::Boltzmann) =
 begin
 
-[edge.node_from.state * edge.node_to.state for edge in boltzmann.visibles], [edge.node_from.state * edge.node_to.state for edge in boltzmann.hiddens]
+[edge.node_from.state * edge.node_to.state for edge in boltzmann.edges]
 end
 
 
-hebbian_learn(hopfield::Hopfield, lr; grads=nothing) =
+hebbian_learn(hopfield::Hopfield, grads, lr) =
 
-    if grads == nothing
-
-        for edge in hopfield.edges
-            edge.weight += lr * edge.node_from.state * edge.node_to.state
-        end
-
-    else
-
-        for (edge, grad) in zip(hopfield.edges, grads)
-            edge.weight += lr * grad
-        end
-
+    for (edge, grad) in zip(hopfield.edges, grads)
+        edge.weight += lr * grad
     end
 
-hebbian_learn(boltzmann::Boltzmann, lr; grads=nothing) =
+hebbian_learn(boltzmann::Boltzmann, grads, lr) =
 
-    if grads == nothing
-
-        for edge in boltzmann.edges
-            edge.weight += lr * edge.node_from.state * edge.node_to.state
-        end
-
-    else
-
-        for (edge, grad) in zip(boltzmann.edges, grads)
-            edge.weight += lr * grad
-        end
-
+    for (edge, grad) in zip(boltzmann.edges, grads)
+        edge.weight += lr * grad
     end
-
-
-
 
 
 ## TESTS
@@ -403,7 +421,95 @@ hebbian_learn(boltzmann::Boltzmann, lr; grads=nothing) =
 
 input = [-1,1,-1,1,1,-1,-1]
 
-# hopfield = Hopfield(length(input))
+hopfield = Hopfield(length(input))
+boltzmann = Boltzmann(length(input), 4)
+
+main() =
+begin
+
+    epochs = 20
+    lr = .1
+
+    temperature_initial = 1
+    temperature_decay = .5
+
+
+    println("> binary hopfield:")
+
+    for _ in 1:epochs
+
+
+        states = binary_update(hopfield, input)
+        grads = hebbian_grads(hopfield)
+        hebbian_learn(hopfield, grads, lr)
+
+        @show states
+
+
+    end ; println(" ")
+
+
+    println("> binary thermal hopfield:")
+
+    for _ in 1:epochs
+
+
+        temperature = temperature_initial
+
+        states = binary_update_thermal(hopfield, input, temperature)
+        grads = hebbian_grads(hopfield)
+        hebbian_learn(hopfield, grads, lr)
+        temperature *= temperature_decay
+
+        @show states
+
+
+    end ; println(" ")
+
+
+    println("> binary thermal boltzmann:")
+
+    for _ in 1:epochs
+
+
+        temperature = temperature_initial
+
+        states = binary_update_thermal_hiddens(boltzmann, input, temperature)
+        grads = hebbian_grads(boltzmann)
+        hebbian_learn(boltzmann, grads, lr)
+        temperature *= temperature_decay
+
+        @show states
+
+
+    end ; println(" ")
+
+
+    println("> continuous thermal boltzmann:")
+
+    for _ in 1:epochs
+
+
+        temperature = temperature_initial
+
+        states = continuous_update_thermal_hiddens(boltzmann, input, temperature)
+        grads = hebbian_grads(boltzmann)
+        hebbian_learn(boltzmann, grads, lr)
+        temperature *= temperature_decay
+
+        @show states
+
+
+    end ; println(" ")
+
+
+end
+
+
+
+
+
+
 # states = binary_update_thermal(hopfield, input, 1.5) # binary_update(hopfield, input)
 # @show states
 # hebbian_learn(hopfield, .01)
@@ -414,19 +520,20 @@ input = [-1,1,-1,1,1,-1,-1]
 # @show states
 
 
-main() = begin
-
-    boltzmann = Boltzmann(length(input), 12)
-
-    n = 10
-    temp = 1.5
-    temp_decay = .8
-
-    for _ in 1:10
-        states = binary_update_thermal_hiddens(boltzmann, input, temp, hm_average=10)
-        @show states
-        hebbian_learn(boltzmann, .01)
-        temp *= temp_decay
-    end
-
-end ; main()
+# main() = begin
+#
+#     boltzmann = Boltzmann(length(input), 12)
+#
+#     n = 10
+#     temp = 1.5
+#     temp_decay = .8
+#
+#     for _ in 1:10
+#         states = binary_update_thermal_hiddens(boltzmann, input, temp, hm_average=10)
+#         grads = hebbian_grads(boltzmann)
+#         @show states
+#         hebbian_learn(boltzmann, grads, .01)
+#         temp *= temp_decay
+#     end
+#
+# end ; main()
