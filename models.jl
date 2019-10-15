@@ -229,7 +229,7 @@ begin
 
             for node in shuffle(boltzmann.hiddens)
                 prob = sigm(sum([edge.weight * edge.node_to.state for edge in node.edges])/temperature)
-                randn() <= prob ? node.state = 1 : node.state = -1
+                randn() <= prob ? node.state = 1.0 : node.state = -1.0
             end
 
             current_states = [node.state for node in boltzmann.hiddens]
@@ -273,7 +273,7 @@ begin
 
             for node in shuffle(boltzmann.visibles)
                 prob = sigm(sum([edge.weight * edge.node_to.state for edge in node.edges])/temperature)
-                randn() <= prob ? node.state = 1 : node.state = -1
+                randn() <= prob ? node.state = 1.0 : node.state = -1.0
             end
 
             current_states = [node.state for node in boltzmann.visibles]
@@ -433,11 +433,9 @@ begin
     temperature_initial = 1
     temperature_decay = .5
 
-
     println("> binary hopfield:")
 
     for _ in 1:epochs
-
 
         states = binary_update(hopfield, input)
         grads = hebbian_grads(hopfield)
@@ -445,14 +443,11 @@ begin
 
         @show states
 
-
     end ; println(" ")
-
 
     println("> binary thermal hopfield:")
 
     for _ in 1:epochs
-
 
         temperature = temperature_initial
 
@@ -463,14 +458,11 @@ begin
 
         @show states
 
-
     end ; println(" ")
-
 
     println("> binary thermal boltzmann:")
 
     for _ in 1:epochs
-
 
         temperature = temperature_initial
 
@@ -481,14 +473,11 @@ begin
 
         @show states
 
-
     end ; println(" ")
-
 
     println("> continuous thermal boltzmann:")
 
     for _ in 1:epochs
-
 
         temperature = temperature_initial
 
@@ -499,41 +488,6 @@ begin
 
         @show states
 
-
     end ; println(" ")
 
-
 end
-
-
-
-
-
-
-# states = binary_update_thermal(hopfield, input, 1.5) # binary_update(hopfield, input)
-# @show states
-# hebbian_learn(hopfield, .01)
-# states = binary_update_thermal(hopfield, input, 1.25) # binary_update(hopfield, input)
-# @show states
-# hebbian_learn(hopfield, .01)
-# states = binary_update_thermal(hopfield, input, 1.0) # binary_update(hopfield, input)
-# @show states
-
-
-# main() = begin
-#
-#     boltzmann = Boltzmann(length(input), 12)
-#
-#     n = 10
-#     temp = 1.5
-#     temp_decay = .8
-#
-#     for _ in 1:10
-#         states = binary_update_thermal_hiddens(boltzmann, input, temp, hm_average=10)
-#         grads = hebbian_grads(boltzmann)
-#         @show states
-#         hebbian_learn(boltzmann, grads, .01)
-#         temp *= temp_decay
-#     end
-#
-# end ; main()
