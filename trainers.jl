@@ -1,91 +1,67 @@
 using Distributed: @distributed, addprocs, procs
+using Distributed: @everywhere
 length(procs()) == 1 ? addprocs(Sys.CPU_THREADS) : ()
 
-include("models.jl")
+@everywhere include("models.jl")
 
 
 # Hopfield
 
 
-grads_on_data(hopfield::Hopfield, input; thermal=false) =
+@everywhere grads_on_data(hopfield::Hopfield, input; t=1) =
 begin
 
-    thermal ? binary_update_thermal(hopfield, input)
-        binary_update(hopfield, input)
+    binary_update_thermal!(hopfield, input, t)
 
-    grads = hebbian_grads(hopfield)
-
-    for node in hopfield.nodes
-        node.state = 0
-    end
-
-grads
+hebbian_grads(hopfield)
 end
 
-grads_on_batch(hopfield::Hopfield, batch; thermal=false) =
+grads_on_batch(hopfield::Hopfield, batch; t=1) =
 
-    (@distributed (sum) for data in batch
-        grads_on_data(hopfield, data, thermal=thermal)
-    end) / length(batch)
+    # (@distributed (sum) for data in batch
+    #     grads_on_data(hopfield, data, t=t)
+    # end) / length(batch)
+
+    sum([grads_on_data(hopfield, data, t=t) for data in batch]) / length(batch)
 
 
-# Binary Boltzmann
+# Boltzmann
 
 
-grads_on_data(boltzmann::Boltzmann, input; binary=true) =
+@everywhere grads_on_data(boltzmann::Boltzmann, input; binary=false, t=1) =
 begin
 
-    binary ? binary_update_thermal_hiddens(boltzmann, input) :
-        continuous_update_thermal_hiddens(boltzmann, input)
+    binary ? binary_update_thermal_hiddens(boltzmann, input, t) :
+        continuous_update_thermal_hiddens(boltzmann, input, t)
 
-    grads = hebbian_grads(boltzmann)
-
-    for node in boltzmann.nodes
-        node.state = 0
-    end
-
-grads
+hebbian_grads(boltzmann)
 end
 
-# grads_on_data_negpos(boltzmann::Boltzmann, input, k; binary=true) =
-# begin
-#                            # TODO : DO
-#     if binary
-#         binary_update_thermal_hiddens(boltzmann, input) :
-#         continuous_update_thermal_hiddens(boltzmann, input)
-#
-#     grads = hebbian_grads(boltzmann)
-#
-#     for node in boltzmann.nodes
-#         node.state = 0
-#     end
-#
-# grads
-# end
+grads_on_data_negpos(boltzmann::Boltzmann, input, k; binary=false, t=1) =
+begin
+
+    binary ? binary_update_thermal_hiddens(boltzmann, input, t) :
+        continuous_update_thermal_hiddens(boltzmann, input, t)
+
+hebbian_grads(boltzmann)
+end
 
 
+grads_on_batch(boltzmann::Boltzmann, batch; binary=false, t=1, negpos=true, k=1) =
 
-grads_on_batch(hopfield::Hopfield, batch; thermal=false) =
+    negpos ?
 
-    (@distributed (sum) for data in batch
-        grads_on_data(hopfield, data)
-    end) / length(batch)
+        (@distributed (sum) for data in batch
+            grads_on_data_negpos(boltzmann, data, k, binary=binary, t=t)
+        end) / length(batch) :
 
-
-
-
-
-# TODO : negative positive trainig
-
-
-
-# Continuous Bolztmann
+        (@distributed (sum) for data in batch
+            grads_on_data(boltzmann, data, binary=binary, t=t)
+        end) / length(batch)
 
 
 
 
 
-
-# batch = [input, input]
-#
-# @show grads_on_batch(hopfield, batch)
+# temperature_calculate(iteration, initial_t) =
+    # TODO : decrease temperature wrt sin wave, triangle wave etc wrt given math func
