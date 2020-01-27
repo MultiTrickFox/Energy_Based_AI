@@ -42,14 +42,14 @@ end
 update_weights!(rbm, learning_rate) =
 begin
 
-    rbm.weights -= learning_rate .* (transpose(rbm.visibles) * rbm.hiddens)
+    rbm.weights += learning_rate .* (transpose(rbm.visibles) * rbm.hiddens)
 
 end
 
 update_weights!(rbm, grad, learning_rate) =
 begin
 
-    rbm.weights -= learning_rate .* grad
+    rbm.weights += learning_rate .* grad
 
 end
 
@@ -78,43 +78,9 @@ begin
 
         pos_hiddens == nothing ? pos_hiddens = rbm.hiddens : ()
 
-    end
+    end ; @show current_visibles ; @show input
 
     grads = (transpose(input) * pos_hiddens) .- (transpose(rbm.visibles) * rbm.hiddens)
 
 grads
 end
-
-
-
-
-run() = begin
-
-    rbm = RBM(3,4)
-
-    inp = randn(1,3)
-
-
-    for _ in 1:10
-
-        # rbm(inp)
-        #
-        # rbm()
-
-        # @show rbm.visibles
-        # @show rbm.hiddens
-
-        #@show rbm.weights
-        grads = alternating_gibbs_grads!(rbm, inp)
-        @show grads[1]
-        update_weights!(rbm, grads, .01)
-        #@show rbm.weights
-
-
-    end
-
-    println(" ")
-    println(" ")
-
-
-end ; run()
