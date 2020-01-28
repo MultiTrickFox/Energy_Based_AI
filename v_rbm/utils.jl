@@ -27,3 +27,11 @@ threadpool(fn_aggregate, fn_map, array) =
 
   value_return
   end
+
+
+### ###
+
+
+batchify(data,batch_size) =
+
+    [data[((i-1)*batch_size)+1:i*batch_size] for i in 1:convert(Int16,floor(length(data)/batch_size))]

@@ -1,6 +1,5 @@
 include("utils.jl")
 
-# using Knet: KnetArray # unlock dis.
 using Knet: sigmoid
 
 
@@ -54,23 +53,22 @@ begin
 end
 
 
-propogate!(rbm, input; n=1) =
+propogate!(rbm, input) =
+begin
 
-    for _ in 1:n
+    rbm(input)
+    rbm()
 
-        rbm(input)
-        rbm()
-
-    end
+end
 
 
-alternating_gibbs_grads!(rbm, input; n=1) =
+alternating_gibbs_grads!(rbm, input; k=1) =
 begin
 
     current_visibles = input
     pos_hiddens = nothing
 
-    for _ in 1:n
+    for _ in 1:k
 
         propogate!(rbm, current_visibles)
 
@@ -78,9 +76,12 @@ begin
 
         pos_hiddens == nothing ? pos_hiddens = rbm.hiddens : ()
 
-    end ; @show current_visibles ; @show input
+    end
 
     grads = (transpose(input) * pos_hiddens) .- (transpose(rbm.visibles) * rbm.hiddens)
 
 grads
 end
+
+
+batch_grads(rbm, batch) = threadpool(sum, args->alternating_gibbs_grads!(args...), [[deepcopy(rbm), input] for input in batch]) ./ length(batch)
