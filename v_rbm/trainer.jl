@@ -3,95 +3,71 @@ include("rbm.jl")
 include("data.jl")
 
 
-using Random: shuffle
+using Random: shuffle, shuffle!
 
 using Knet: norm
 
 using Plots: plot, plot!
 
 
-
-rbm = RBM(out_size,20)
-
-
-lr = .001
-
-hm_epochs = 100
-
-batch_size = 100
+train(;hidden_size = 20,
+       lr          = .001,
+       hm_epochs   = 10,
+       batch_size  = 100,
+      ) =
+begin
 
 
-
-# inp = randn(1,3)
-#
-# data = [randn(1,3) for _ in 1:20]
-#
-# test_data = [randn(1,3) for _ in 1:20]
+    rbm = RBM(out_size,hidden_size)
 
 
+    grad_norms = []
+    grad_sums = []
 
-grad_norms = []
-grad_sums = []
-
-test_grad_sums = []
-
-
-for ep in 1:hm_epochs
+    test_grad_sums = []
+    test_grad_norms = []
 
 
-    # rbm(inp)
-    #
-    # rbm()
+    for ep in 1:hm_epochs
 
-    # @show rbm.visibles
-    # @show rbm.hiddens
+        total_grads = nothing
 
 
-    # #@show rbm.weights
-    #
-    # grads = alternating_gibbs_grads!(rbm, inp)
-    # # @show grads[1]
-    # update_weights!(rbm, grads, .1)
-    #
-    # #@show rbm.weights
+        for batch in batchify(shuffle(data_train),batch_size)
 
 
-    total_grads = nothing
+            grads = batch_grads(rbm, batch)
+
+            update_weights!(rbm, grads, lr)
 
 
-    for batch in batchify(shuffle(data_train),batch_size)
+            total_grads == nothing ? total_grads = grads : total_grads += grads
 
 
-        grads = batch_grads(rbm, batch)
-
-        update_weights!(rbm, grads, lr)
+        end
 
 
-        total_grads == nothing ? total_grads = grads : total_grads += grads
+        println("Epoch: $ep grad norm: $(norm(total_grads))")
+
+        push!(grad_norms, norm(total_grads))
+        push!(grad_sums, sum(abs.(total_grads)))
+
+        dev_grads = batch_grads(rbm, data_dev)
+        push!(test_grad_sums, sum(abs.(dev_grads)))
+        push!(test_grad_norms, norm(dev_grads))
 
 
     end
 
-    println("Epoch: $ep")
-    @show norm(total_grads)
+
+    p1 = plot(1:hm_epochs, grad_norms, title="grad_norms")
+    p2 = plot(1:hm_epochs, grad_sums, title="grad_sums")
+    p3 = plot(1:hm_epochs, test_grad_sums, title="dev_grad_sums")
+
+    display(plot(p1,p2,p3,layout=(3,1)))
 
 
-    push!(grad_norms, norm(total_grads))
-    push!(grad_sums, sum(abs.(total_grads)))
-    push!(test_grad_sums, sum(abs.(batch_grads(rbm, data_dev))))
+    return rbm,[grad_norms, grad_sums, test_grad_norms, test_grad_sums]
 
 
 end
-
-
-
-p1 = plot(1:hm_epochs, grad_norms, title="grad_norms")
-p2 = plot(1:hm_epochs, grad_sums, title="grad_sums")
-p3 = plot(1:hm_epochs, test_grad_sums, title="dev_grad_sums")
-
-display(plot(p1,p2,p3,layout=(3,1)))
-
-
-
-println(" ")
-println(" ")
