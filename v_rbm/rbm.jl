@@ -1,6 +1,6 @@
 include("utils.jl")
 
-using Knet: sigmoid
+# using Knet: sigmoid
 
 
 
@@ -26,14 +26,14 @@ end
 (rbm::RBM)(input) =
 begin
 
-    rbm.hiddens = sigmoid.(input * rbm.weights)
+    rbm.hiddens = tanh.(input * rbm.weights)
 
 end
 
 (rbm::RBM)() =
 begin
 
-    rbm.visibles = sigmoid.(rbm.hiddens * transpose(rbm.weights))
+    rbm.visibles = tanh.(rbm.hiddens * transpose(rbm.weights))
 
 end
 
