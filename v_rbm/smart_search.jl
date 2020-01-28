@@ -37,14 +37,14 @@ runner() = begin
     while true
 
 
-        println("learning rate: $current_lr hidden size: $current_hs")
+        println("\nlearning rate: $current_lr hidden size: $current_hs")
 
-        (model,results) = train(hidden_size=current_hs,lr=current_lr,hm_epochs=hm_epochs_max)[end]
+        (model,result) = train(hidden_size=current_hs,lr=current_lr,hm_epochs=hm_epochs_max)[end]
 
         push!(results[indexof(current_lr,learning_rates)][indexof(current_hs,hidden_sizes)], result)
 
 
-        current_loss = results[end-1][argmin(results[end-1])]
+        current_loss = result[end-1][argmin(result[end-1])]
 
         @show current_loss
 

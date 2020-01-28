@@ -62,9 +62,11 @@ begin
 
     p1 = plot(1:hm_epochs, grad_norms, title="grad_norms")
     p2 = plot(1:hm_epochs, grad_sums, title="grad_sums")
-    p3 = plot(1:hm_epochs, test_grad_sums, title="dev_grad_sums")
+    p3 = plot(1:hm_epochs, test_grad_norms, title="dev_grad_norms")
+    p4 = plot(1:hm_epochs, test_grad_sums, title="dev_grad_sums")
 
-    display(plot(p1,p2,p3,layout=(3,1)))
+
+    display(plot(p1,p2,p3,p4layout=(4,1)))
 
 
     return rbm,[grad_norms, grad_sums, test_grad_norms, test_grad_sums]
