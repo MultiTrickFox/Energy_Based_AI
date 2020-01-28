@@ -10,10 +10,10 @@ using Knet: norm
 using Plots: plot, plot!
 
 
-train(;hidden_size = 20,
+train(;hidden_size = 2,
        lr          = .001,
-       hm_epochs   = 10,
-       batch_size  = 100,
+       hm_epochs   = 100,
+       batch_size  = 200,
       ) =
 begin
 
@@ -47,29 +47,30 @@ begin
         end
 
 
+
         println("Epoch: $ep grad norm: $(norm(total_grads))")
+
+
 
         push!(grad_norms, norm(total_grads))
         push!(grad_sums, sum(abs.(total_grads)))
 
         dev_grads = batch_grads(rbm, data_dev)
+
         push!(test_grad_sums, sum(abs.(dev_grads)))
         push!(test_grad_norms, norm(dev_grads))
 
-
     end
 
+    p1 = plot(1:hm_epochs, grad_norms,      title="train_norms")
+    p2 = plot(1:hm_epochs, grad_sums,       title="train_sums")
+    p3 = plot(1:hm_epochs, test_grad_norms, title="dev_norms")
+    p4 = plot(1:hm_epochs, test_grad_sums,  title="dev_sums")
 
-    p1 = plot(1:hm_epochs, grad_norms, title="grad_norms")
-    p2 = plot(1:hm_epochs, grad_sums, title="grad_sums")
-    p3 = plot(1:hm_epochs, test_grad_norms, title="dev_grad_norms")
-    p4 = plot(1:hm_epochs, test_grad_sums, title="dev_grad_sums")
-
-
-    display(plot(p1,p2,p3,p4layout=(4,1)))
+    display(plot(p1,p2,p3,p4,layout=(4,1)))
 
 
-    return rbm,[grad_norms, grad_sums, test_grad_norms, test_grad_sums]
+    return rbm, [grad_norms,grad_sums,test_grad_norms,test_grad_sums]
 
 
 end

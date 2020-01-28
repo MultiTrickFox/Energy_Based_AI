@@ -27,6 +27,17 @@ data_train = [e[1] for e in data_train]
 data_dev = [e[1] for e in data_dev]
 
 
+step_fn(x) =
+    if x > 0
+        1
+    else
+        0
+    end
+
+data_train = [step_fn.(e) for e in data_train]
+data_dev = [step_fn.(e) for e in data_dev]
+
+
 
 # data_train = collect(zip(xtrn, ytrn))
 # data_dev = collect(zip(xtst, ytst))

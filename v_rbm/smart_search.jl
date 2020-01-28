@@ -20,11 +20,11 @@ runner() = begin
     results = [[[] for _ in hidden_sizes] for _ in learning_rates]
 
 
-    current_lr = .01 #learning_rates[rand(1:length(learning_rates))]
-    current_hs = 16 #hidden_sizes[rand(1:length(hidden_sizes))]
+    current_lr = learning_rates[rand(1:length(learning_rates))]
+    current_hs = hidden_sizes[rand(1:length(hidden_sizes))]
 
-    prev_lr = nothing
-    prev_hs = nothing
+    prev_lr = learning_rates[indexof(current_lr, learning_rates)]
+    prev_hs = hidden_sizes[indexof(current_hs, hidden_sizes)]
 
     prev_loss = 999_999_999
 
@@ -58,22 +58,20 @@ runner() = begin
 
             println("** new best found! : ($(current_lr),$(current_hs))")
 
-            if current_lr != prev_lr
-                if current_lr < prev_lr
-                    next_lr = learning_rates[indexof(prev_lr,learning_rates)-1]
-                else
-                    next_lr = learning_rates[indexof(prev_lr,learning_rates)+1]
-                end
-                next_hs = current_hs
-
-            elseif current_hs != prev_hs
+            if current_lr == prev_lr
                 if current_hs < prev_hs
                     next_hs = hidden_sizes[indexof(prev_hs,hidden_sizes)-1]
                 else
                     next_hs = hidden_sizes[indexof(prev_hs,hidden_sizes)+1]
                 end
                 next_lr = current_lr
-
+            elseif current_hs == prev_hs
+                if current_lr < prev_lr
+                    next_lr = learning_rates[indexof(prev_lr,learning_rates)-1]
+                else
+                    next_lr = learning_rates[indexof(prev_lr,learning_rates)+1]
+                end
+                next_hs = current_hs
             end
 
             prev_lr = current_lr
