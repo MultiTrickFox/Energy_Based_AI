@@ -1,7 +1,7 @@
 include("utils.jl")
 
 using Knet: KnetArray
-using Knet: sigmoid
+using Knet: sigmoid     # TODO : add batch dim to Xs
 
 
 

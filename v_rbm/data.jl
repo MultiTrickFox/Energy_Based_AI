@@ -5,22 +5,22 @@ nist = mnist()
 data_train = []
 data_dev  = []
 
-out_size = 784
+in_size = 784
 
 
 to_label(int_val) =
 begin
-    lbl = zeros(1, out_size)
+    lbl = zeros(1, 10)
     lbl[int_val] += 1
 lbl
 end
 
 for i in 1:size(nist[1])[end]
-    push!(data_train, (reshape(nist[1][:,:,:,i], 1, out_size),to_label(nist[2][i])))
+    push!(data_train, (reshape(nist[1][:,:,:,i], 1, in_size),to_label(nist[2][i])))
 end ;
 
 for i in 1:size(nist[3])[end]
-    push!(data_dev, (reshape(nist[3][:,:,:,i], 1, out_size),to_label(nist[4][i])))
+    push!(data_dev, (reshape(nist[3][:,:,:,i], 1, in_size),to_label(nist[4][i])))
 end ;
 
 data_train = [e[1] for e in data_train]
