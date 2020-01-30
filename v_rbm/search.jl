@@ -1,4 +1,4 @@
-include("trainer.jl")
+include("interact.jl")
 
 
 # using Plotly: plot
@@ -14,6 +14,8 @@ hm_epochs = 100
 
 
 exec() = begin
+
+    @info "Search begin.."
 
 
 grid_results = [[[] for _ in 1:length(learning_rates)] for _ in 1:length(hidden_sizes)]

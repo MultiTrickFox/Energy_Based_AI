@@ -8,15 +8,18 @@ using Knet: norm
 using Plots: plot, plot!
 
 
-train(;hidden_size = 8,
-       lr          = .01,
-       hm_epochs   = 50,
-       batch_size  = 200,
+train(;rbm         = nothing,
+       hidden_size = 10,
+       lr          = 1,
+       hm_epochs   = 10,
+       batch_size  = length(data_train),
       ) =
 begin
 
 
-    rbm = RBM(in_size,hidden_size)
+    rbm == nothing ?
+        rbm = RBM(in_size,hidden_size) :
+            ()
 
 
     grad_norms = []
@@ -75,3 +78,33 @@ begin
 
 rbm, [grad_norms,grad_sums,test_grad_norms,test_grad_sums]
 end
+
+
+# import.
+
+
+generate(rbm) =
+begin
+
+    rbm(data_train[1])
+
+    #random_states = randn(1,length(rbm.hiddens))
+
+    #binary ? random_states = binarize.(random_states) : ()
+
+    #rbm.hiddens = random_states
+
+    rbm()
+
+    generation = reshape(rbm.visibles, (1, int(sqrt(in_size)),int(sqrt(in_size))))
+
+generation
+end
+
+
+
+model, _ = train()
+
+gen = generate(model)
+
+println(" ")

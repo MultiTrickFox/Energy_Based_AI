@@ -5,7 +5,7 @@ nist = mnist()
 data_train = []
 data_dev  = []
 
-in_size = 784
+in_size = 28*28
 
 
 to_label(int_val) =
@@ -25,6 +25,21 @@ end ;
 
 data_train = [e[1] for e in data_train]
 data_dev = [e[1] for e in data_dev]
+
+
+# try
+
+    if binary
+        data_train = [binarize.(e) for e in data_train]
+        data_dev = [binarize.(e) for e in data_dev]
+    end
+
+# catch
+#
+#     println("Warning: data.jl imported before rbm.jl")
+#
+# end
+
 
 
 # step_fn(x) =

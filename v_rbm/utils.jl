@@ -85,6 +85,9 @@ indicesof(e, list) =
 
 len(arr) = length(arr)
 
+resize(arr, sizes) = reshape(arr, sizes)
+
+
 
 int(nr) = convert(Int32,floor(nr))
 
@@ -114,4 +117,7 @@ enum(arr) = enumerate(arr)
 
 ##
 
-println("detected cores: $(nthreads())")
+println("utils read.")
+
+
+@info "Julia cores: \n\t$(nthreads()) threads of $(length(Sys.cpu_info())). \n\t$(length(procs())) procs of $(length(Sys.cpu_info()))."

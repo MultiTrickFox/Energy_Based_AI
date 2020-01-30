@@ -6,6 +6,8 @@ using Knet: sigmoid
 
 binary = false
 
+non_binary_act = sigmoid   # TODO : ask, tanh, sigm, & continuous
+
 
 binarize(x) = round(x)
 
@@ -39,7 +41,7 @@ end
     if binary
         rbm.hiddens = binarize.(sigmoid.(input * rbm.weights))
     else
-        rbm.hiddens = tanh.(input * rbm.weights) # TODO : ask, tanh & continuous
+        rbm.hiddens = non_binary_act.(input * rbm.weights)
     end
 
 
@@ -48,7 +50,7 @@ end
     if binary
         rbm.visibles = binarize.(sigmoid.(rbm.hiddens * transpose(rbm.weights)))
     else
-        rbm.visibles = tanh.(rbm.hiddens * transpose(rbm.weights)) # TODO : ask, tanh & continuous
+        rbm.visibles = non_binary_act.(rbm.hiddens * transpose(rbm.weights))
     end
 
 
@@ -73,16 +75,15 @@ end
 alternating_gibbs_grads!(rbm, input; k=1) =
 begin
 
-    current_visibles = input
-    pos_hiddens = nothing
+    rbm(input)
+
+    pos_hiddens = rbm.hiddens
 
     for _ in 1:k
 
-        propogate!(rbm, current_visibles)
+        rbm()
 
-        current_visibles = rbm.visibles
-
-        pos_hiddens == nothing ? pos_hiddens = rbm.hiddens : ()
+        rbm(rbm.visibles)
 
     end
 
