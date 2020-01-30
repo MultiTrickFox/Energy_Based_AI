@@ -86,13 +86,11 @@ end
 generate(rbm) =
 begin
 
-    rbm(data_train[1])
+    random_states = randn(1,length(rbm.hiddens))
 
-    #random_states = randn(1,length(rbm.hiddens))
+    binary ? random_states = binarize.(random_states) : ()
 
-    #binary ? random_states = binarize.(random_states) : ()
-
-    #rbm.hiddens = random_states
+    rbm.hiddens = random_states
 
     rbm()
 
@@ -103,8 +101,8 @@ end
 
 
 
-model, _ = train()
-
-gen = generate(model)
-
-println(" ")
+# model, _ = train()
+#
+# gen = generate(model)
+#
+# println(" ")
