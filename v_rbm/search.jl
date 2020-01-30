@@ -5,11 +5,11 @@ include("trainer.jl")
 # using Plots: pyplot
 
 
-hidden_sizes = [2^i for i in 2:10]
+hidden_sizes = [2^i for i in 2:8]
 
-learning_rates = [1/(10^(i-1)) for i in 1:12]
+learning_rates = [1/(10^i) for i in 1:7]
 
-hm_epochs = 50
+hm_epochs = 100
 
 
 
@@ -18,10 +18,12 @@ exec() = begin
 
 grid_results = [[[] for _ in 1:length(learning_rates)] for _ in 1:length(hidden_sizes)]
 
+prev_norm = 999_999_999
+
 
     for (hs, res1) in zip(hidden_sizes, grid_results)
 
-        print("\ths: $hs")
+        println("\ths: $hs")
 
 
         # model = RBM(in_size, hs)
@@ -36,7 +38,7 @@ grid_results = [[[] for _ in 1:length(learning_rates)] for _ in 1:length(hidden_
 
         for (lr, (i, res2)) in zip(learning_rates, enumerate(res1))
 
-            print("\t\tlr: $lr")
+            println("\t\tlr: $lr")
 
 
             # model_cpy = deepcopy(model)
@@ -54,15 +56,22 @@ grid_results = [[[] for _ in 1:length(learning_rates)] for _ in 1:length(hidden_
             # @show dev_norm
 
 
-            _,meta = train(hidden_size=hs,lr=lr,batch_size=len(data_train),hm_epochs=50)
+            _,meta = train(hidden_size=hs,lr=lr,batch_size=len(data_train),hm_epochs=hm_epochs)
 
 
-            devnorm = "$(round(meta[3][argmin(meta[3])],digits=3))/$(argmin(meta[3]))"
-            @show devnorm
+            min_dev_norm = "$(round(meta[3][argmin(meta[3])],digits=3))/$(argmin(meta[3]))"
+            @show min_dev_norm
+            min_dev_norm = round(meta[3][argmin(meta[3])],digits=3)
 
-            res1[i] = [e[end] for e in meta]
+            res1[i] = meta
+
+
+            min_dev_norm > prev_norm ? break : prev_norm = min_dev_norm
+
 
         end
+
+        prev_norm = 999_999_999
 
     end
     # @show plot_results

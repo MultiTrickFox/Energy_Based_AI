@@ -93,7 +93,7 @@ float(nr) = convert(Float32,nr)
 str(nr) = "$(nr)"
 
 
-print(str) = println(str)
+# print(str) = println(str)
 
 
 ##
@@ -109,4 +109,9 @@ using Random: randperm
 choices(arr,n) = arr[randperm(length(arr))[1:n]]
 
 
+enum(arr) = enumerate(arr)
+
+
 ##
+
+println("detected cores: $(nthreads())")

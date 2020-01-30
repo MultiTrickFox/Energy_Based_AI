@@ -59,10 +59,16 @@ begin
 
     end
 
-    p1 = plot(1:hm_epochs, grad_norms,     title="train_norm_$(lr)_$(hidden_size)_$(batch_size)",xlabel="$(round(grad_norms[end][argmin(grad_norms[end])],digits=3))/$(argmin(grad_norms[end]))")
-    p2 = plot(1:hm_epochs, grad_sums,      title="train_sum_$(lr)_$(hidden_size)_$(batch_size)",xlabel="$(round(grad_sums[end][argmin(grad_sums[end])],digits=3))/$(argmin(grad_sums[end]))")
-    p3 = plot(1:hm_epochs, test_grad_norms,title="dev_norm_$(lr)_$(hidden_size)_$(batch_size)",xlabel="$(round(test_grad_norms[end][argmin(test_grad_norms[end])],digits=3))/$(argmin(test_grad_norms[end]))")
-    p4 = plot(1:hm_epochs, test_grad_sums, title="dev_sum_$(lr)_$(hidden_size)_$(batch_size)",xlabel="$(round(test_grad_sums[end][argmin(test_grad_sums[end])],digits=3))/$(argmin(test_grad_sums[end]))")
+    min_train_norm = argmin(grad_norms)
+    min_train_sum = argmin(grad_sums)
+    min_dev_norm = argmin(test_grad_norms)
+    min_dev_sum = argmin(test_grad_sums)
+
+
+    p1 = plot(1:hm_epochs, grad_norms,     title="train_norm_$(lr)_$(hidden_size)_$(batch_size)",xlabel="$(grad_norms[min_train_norm]) / $(min_train_norm)")
+    p2 = plot(1:hm_epochs, grad_sums,      title="train_sum_$(lr)_$(hidden_size)_$(batch_size)",xlabel="$(grad_sums[min_train_sum]) / $(min_train_sum)")
+    p3 = plot(1:hm_epochs, test_grad_norms,title="dev_norm_$(lr)_$(hidden_size)_$(batch_size)",xlabel="$(test_grad_norms[min_dev_norm]) / $(min_dev_norm)")
+    p4 = plot(1:hm_epochs, test_grad_sums, title="dev_sum_$(lr)_$(hidden_size)_$(batch_size)",xlabel="$(test_grad_sums[min_dev_sum]) / $(min_dev_sum)")
 
     display(plot(p1,p2,p3,p4,layout=(2,2)))
 
