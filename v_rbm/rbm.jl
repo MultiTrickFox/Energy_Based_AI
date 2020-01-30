@@ -1,7 +1,18 @@
 include("utils.jl")
 
-# using Knet: sigmoid
+using Knet: sigmoid
 
+
+
+binary = false
+
+
+binarize(x) = round(x)
+
+    # x > 0 ? 1 : 0     # TODO : ask, which one to use
+
+
+##
 
 
 mutable struct RBM
@@ -24,26 +35,23 @@ end
 
 
 (rbm::RBM)(input) =
-begin
 
-    rbm.hiddens = tanh.(input * rbm.weights)
+    if binary
+        rbm.hiddens = binarize.(sigmoid.(input * rbm.weights))
+    else
+        rbm.hiddens = tanh.(input * rbm.weights) # TODO : ask, tanh & continuous
+    end
 
-end
 
 (rbm::RBM)() =
-begin
 
-    rbm.visibles = tanh.(rbm.hiddens * transpose(rbm.weights))
+    if binary
+        rbm.visibles = binarize.(sigmoid.(rbm.hiddens * transpose(rbm.weights)))
+    else
+        rbm.visibles = tanh.(rbm.hiddens * transpose(rbm.weights)) # TODO : ask, tanh & continuous
+    end
 
-end
 
-
-update_weights!(rbm, learning_rate) =
-begin
-
-    rbm.weights += learning_rate .* (transpose(rbm.visibles) * rbm.hiddens)
-
-end
 
 update_weights!(rbm, grad, learning_rate) =
 begin
