@@ -8,16 +8,16 @@ using Knet: norm
 using Plots: plot, plot!
 
 
-train(;rbm         = nothing,
-       hidden_size = 10,
-       lr          = 1,
-       hm_epochs   = 10,
-       batch_size  = length(data_train),
+train(;rbm            = nothing,
+       hidden_size    = 10,
+       learning_rate  = 1,
+       hm_epochs      = 10,
+       batch_size     = length(data_train),
       ) =
 begin
 
 
-    @info "Training starting.. \nhidden size: $(hidden_size) \nlearning_rate: $(lr) \nbatch_size: $(batch_size)"
+    @info "Starting training... \nhidden size   $(hidden_size) \nlearning rate $(learning_rate) \nbatch size    $(batch_size)"
 
 
     rbm == nothing ?
@@ -34,8 +34,8 @@ begin
 
     dev_grads = batch_grads(rbm, data_dev)
 
-    println("initial dev norm: $(norm(dev_grads))")
-    println("initial dev sum: $(sum(abs.(dev_grads)))")
+    println("initial dev norm $(norm(dev_grads))")
+    println("initial dev sum $(sum(abs.(dev_grads)))")
 
 
     for ep in 1:hm_epochs
@@ -47,7 +47,7 @@ begin
 
             grads = batch_grads(rbm, batch)
 
-            update_weights!(rbm, grads, lr)
+            update_weights!(rbm, grads, learning_rate)
 
 
             total_grads == nothing ? total_grads = grads : total_grads += grads
@@ -65,7 +65,7 @@ begin
         push!(test_grad_norms, norm(dev_grads))
 
 
-        println("Epoch $ep; train_norm: $(round(norm(total_grads),digits=3)), dev_norm: $(round(norm(dev_grads),digits=3))")
+        println("Epoch $ep, train_norm $(round(norm(total_grads),digits=3)), dev_norm $(round(norm(dev_grads),digits=3))")
 
 
     end
@@ -76,12 +76,12 @@ begin
     min_dev_norm = argmin(test_grad_norms)
     min_dev_sum = argmin(test_grad_sums)
 
-    p1 = plot(1:hm_epochs, grad_norms,     title="train_norm_$(hidden_size)_$(lr)_$(batch_size)",xlabel="$(grad_norms[min_train_norm]) - $(min_train_norm)")
-    p2 = plot(1:hm_epochs, grad_sums,      title="train_sum_$(hidden_size)_$(lr)_$(batch_size)",xlabel="$(grad_sums[min_train_sum]) - $(min_train_sum)")
-    p3 = plot(1:hm_epochs, test_grad_norms,title="dev_norm_$(hidden_size)_$(lr)_$(batch_size)",xlabel="$(test_grad_norms[min_dev_norm]) - $(min_dev_norm)")
-    p4 = plot(1:hm_epochs, test_grad_sums, title="dev_sum_$(hidden_size)_$(lr)_$(batch_size)",xlabel="$(test_grad_sums[min_dev_sum]) - $(min_dev_sum)")
+    p1 = plot(1:hm_epochs, grad_norms,     title="train_norm_$(hidden_size)_$(learning_rate)_$(batch_size)",xlabel="$(grad_norms[min_train_norm]) / $(min_train_norm)")
+    p2 = plot(1:hm_epochs, grad_sums,      title="train_sum_$(hidden_size)_$(learning_rate)_$(batch_size)",xlabel="$(grad_sums[min_train_sum]) / $(min_train_sum)")
+    p3 = plot(1:hm_epochs, test_grad_norms,title="dev_norm_$(hidden_size)_$(learning_rate)_$(batch_size)",xlabel="$(test_grad_norms[min_dev_norm]) / $(min_dev_norm)")
+    p4 = plot(1:hm_epochs, test_grad_sums, title="dev_sum_$(hidden_size)_$(learning_rate)_$(batch_size)",xlabel="$(test_grad_sums[min_dev_sum]) / $(min_dev_sum)")
 
-    display(plot(plots...,layout=(2,2)))
+    display(plot(p1,p2,p3,p4,layout=(2,2)))
 
 
 rbm, [grad_norms,grad_sums,test_grad_norms,test_grad_sums]
@@ -100,7 +100,7 @@ begin
     binary ? random_states = binarize.(random_states) : ()
 
 
-    rbm.hiddens = random_states # TODO : start from random or similar to a data class ?
+    rbm.hiddens = random_states # TODO : start from random or similar to a datapoint ?
 
     rbm()
 
@@ -115,3 +115,27 @@ end
 # gen = generate(model)
 #
 # println(" ") # show as img.
+
+
+
+main() = begin
+
+    for i in 1:10
+
+        @info "Global Iteration g$(i)"
+
+        for hs in [2,4,8,10,16,32]
+
+            #rbm = RBM(in_size, hs)
+
+            for lr in [1,.8,.6,.4,.2,.1]
+
+                train(hidden_size=hs,learning_rate=lr)#,rbm=deepcopy(rbm))
+
+            end
+
+        end
+
+    end
+
+end; main()

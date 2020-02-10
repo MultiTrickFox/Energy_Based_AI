@@ -6,9 +6,9 @@ binary = true
 
 binarize_data(x) = round(x) == 0 ? -1 : 1
 
-binarize_state(x) = round(x) # randn() < x ? 0 : 1
+binarize_state(x) = x > 0 ? 1 : -1
 
-    # x > 0 ? 1 : -1     # TODO : which one to use
+    # sign / round / randn() < x ? -1 : 1   # TODO : which one to use
 
 
 ##
@@ -54,10 +54,10 @@ end
 
 
 
-update_weights!(rbm, grads, learning_rate) =
+update_weights!(rbm, grads, lr) =
 begin
 
-    rbm.weights += learning_rate .* grads
+    rbm.weights += lr .* grads
 
 end
 
