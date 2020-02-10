@@ -1,17 +1,14 @@
 include("utils.jl")
 
-using Knet: sigmoid
+
+binary = true
 
 
+binarize_data(x) = round(x) == 0 ? -1 : 1
 
-binary = false
+binarize_state(x) = round(x) # randn() < x ? 0 : 1
 
-non_binary_act = sigmoid   # TODO : tanh, sigm, & continuous
-
-
-binarize(x) = round(x)
-
-    # x > 0 ? 1 : 0     # TODO : which one to use
+    # x > 0 ? 1 : -1     # TODO : which one to use
 
 
 ##
@@ -37,28 +34,30 @@ end
 
 
 (rbm::RBM)(input) =
+begin
 
-    if binary
-        rbm.hiddens = binarize.(sigmoid.(input * rbm.weights))
-    else
-        rbm.hiddens = non_binary_act.(input * rbm.weights)
-    end
+    rbm.hiddens = tanh.(input * rbm.weights)
+
+    binary ? rbm.hiddens = binarize_state.(rbm.hiddens) : ()
+
+end
 
 
 (rbm::RBM)() =
-
-    if binary
-        rbm.visibles = binarize.(sigmoid.(rbm.hiddens * transpose(rbm.weights)))
-    else
-        rbm.visibles = non_binary_act.(rbm.hiddens * transpose(rbm.weights))
-    end
-
-
-
-update_weights!(rbm, grad, learning_rate) =
 begin
 
-    rbm.weights += learning_rate .* grad
+    rbm.visibles = tanh.(rbm.hiddens * transpose(rbm.weights))
+
+    binary ? rbm.visibles = binarize_state.(rbm.visibles) : ()
+
+end
+
+
+
+update_weights!(rbm, grads, learning_rate) =
+begin
+
+    rbm.weights += learning_rate .* grads
 
 end
 

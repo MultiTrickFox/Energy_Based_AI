@@ -30,8 +30,8 @@ data_dev = [e[1] for e in data_dev]
 # try
 
     if binary
-        data_train = [binarize.(e) for e in data_train]
-        data_dev = [binarize.(e) for e in data_dev]
+        data_train = [binarize_data.(e) for e in data_train]
+        data_dev = [binarize_data.(e) for e in data_dev]
     end
 
 # catch

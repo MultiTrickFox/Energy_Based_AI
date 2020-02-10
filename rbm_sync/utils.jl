@@ -72,8 +72,11 @@ batchify(list, batch_size) =
 
 indexof(e, list) =
 
-    findall(x->x==e,list)[1]
+    for (i,e2) in enumerate(list)
 
+        e2 == e ? (return i) : ()
+
+    end
 
 indicesof(e, list) =
 
@@ -85,25 +88,22 @@ indicesof(e, list) =
 
 len(arr) = length(arr)
 
-resize(arr, sizes) = reshape(arr, sizes)
+resize(arr, size) = reshape(arr, size)
 
 
+int(nr::AbstractFloat) = convert(Int32,floor(nr))
+int(nr::AbstractString) = parse(Int32,nr)
 
-int(nr) = convert(Int32,floor(nr))
-
-float(nr) = convert(Float32,nr)
+float(nr::Integer) = convert(Float32,nr)
+float(nr::AbstractString) = parse(Float32,nr)
 
 str(nr) = "$(nr)"
-
-
-# print(str) = println(str)
 
 
 ##
 
 
 using Random: shuffle, shuffle!
-
 
 choice(arr) = arr[randn(1:length(arr))]
 
@@ -115,9 +115,22 @@ choices(arr,n) = arr[randperm(length(arr))[1:n]]
 enum(arr) = enumerate(arr)
 
 
+type(e) = typeof(e)
+
+
 ##
 
-println("utils read.")
+
+input(prompt="") =
+begin
+
+    print(prompt)
+
+chomp(readline())
+end
 
 
-@info "Julia cores: \n\t$(nthreads()) threads of $(length(Sys.cpu_info())). \n\t$(length(procs())) procs of $(length(Sys.cpu_info()))."
+##
+
+
+@info "Utils read. \nthreads  : $(nthreads()) of $(length(Sys.cpu_info())) \nprocesses: $(length(procs())) of $(length(Sys.cpu_info()))"
