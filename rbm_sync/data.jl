@@ -23,9 +23,15 @@ for i in 1:size(nist[3])[end]
     push!(data_dev, (reshape(nist[3][:,:,:,i], 1, in_size),to_label(nist[4][i])))
 end ;
 
+
 data_train = [e[1] for e in data_train]
 data_dev = [e[1] for e in data_dev]
 
+
+fn_01_to_minus1plus1 = x->(x*2)-1
+
+data_train = fn_01_to_minus1plus1.(data_train)
+data_dev = fn_01_to_minus1plus1.(data_dev)
 
 # try
 

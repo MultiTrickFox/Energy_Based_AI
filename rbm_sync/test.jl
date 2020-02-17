@@ -5,10 +5,6 @@
 include("interact.jl")
 
 
-data_train = [e == 0 ? -1 : e for e in data_train]
-data_dev = [e == 0 ? -1 : e for e in data_dev]
-
-
 ##
 
 
