@@ -44,7 +44,6 @@ begin
 
         for batch in batchify(shuffle(data_train),batch_size)
 
-
             grads = batch_grads(rbm, batch)
 
             update_weights!(rbm, grads, learning_rate)
@@ -56,16 +55,16 @@ begin
         end
 
 
-        push!(grad_norms, norm(total_grads))
-        push!(grad_sums, sum(abs.(total_grads)))
+        push!(grad_norms, norm(total_grads)./sqrt(hidden_size))
+        push!(grad_sums, sum(abs.(total_grads))./hidden_size)
 
         dev_grads = batch_grads(rbm, data_dev)
 
-        push!(test_grad_sums, sum(abs.(dev_grads)))
-        push!(test_grad_norms, norm(dev_grads))
+        push!(test_grad_norms, norm(dev_grads)./sqrt(hidden_size))
+        push!(test_grad_sums, sum(abs.(dev_grads))./hidden_size)
 
 
-        println("Epoch $ep, train_norm $(round(norm(total_grads),digits=3)), dev_norm $(round(norm(dev_grads),digits=3))")
+        println("Epoch $ep, train_sum $(round(grad_sums[end],digits=3)), dev_sum $(round(test_grad_sums[end],digits=3))")
 
 
     end
@@ -91,51 +90,29 @@ end
 ##
 
 
-generate(rbm) =
+using Knet: relu
+
+generate(rbm;hidden_state=nothing) =
 begin
 
+    if hidden_state == nothing
 
-    random_states = randn(1,length(rbm.hiddens))
+        random_states = randn(1,length(rbm.hiddens))
 
-    binary ? random_states = binarize.(random_states) : ()
+        binary ? random_states = binarize-state.(random_states) : ()
 
-
-    rbm.hiddens = random_states # TODO : start from random or similar to a datapoint ?
-
-    rbm()
-
-
-reshape(rbm.visibles, (1, int(sqrt(in_size)),int(sqrt(in_size))))
-end
-
-
-
-# model, meta = train()
-#
-# gen = generate(model)
-#
-# println(" ") # show as img.
-
-
-
-main() = begin
-
-    for i in 1:10
-
-        @info "Global Iteration g$(i)"
-
-        for hs in [2,4,8,10,16,32]
-
-            #rbm = RBM(in_size, hs)
-
-            for lr in [1,.8,.6,.4,.2,.1]
-
-                train(hidden_size=hs,learning_rate=lr)#,rbm=deepcopy(rbm))
-
-            end
-
-        end
+        hidden_state = random_states
 
     end
 
-end; main()
+    rbm.hiddens = hidden_state
+
+    rbm()
+
+    propogate_until_convergence!(rbm, rbm.visibles)
+
+reshape(relu.(rbm.visibles), (1, int(sqrt(in_size)),int(sqrt(in_size))))
+end
+
+
+##

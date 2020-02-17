@@ -8,8 +8,6 @@ binarize_data(x) = round(x) == 0 ? -1 : 1
 
 binarize_state(x) = x > 0 ? 1 : -1
 
-    # sign / round / randn() < x ? -1 : 1   # TODO : which one to use
-
 
 ##
 
@@ -85,3 +83,38 @@ end
 
 
 batch_grads(rbm, batch) = threadpool(sum, args->alternating_gibbs_grads!(args...), [[deepcopy(rbm), input] for input in batch]) ./ length(batch)
+
+
+##
+
+
+energy(rbm) = -(rbm.visibles * rbm.weights * rbm.hiddens')
+
+
+
+propogate_until_convergence!(rbm, input; k=1_000) =
+begin
+
+    prev_visibles = nothing
+    prev_hiddens = nothing
+
+    ctr = 0
+
+    while (rbm.visibles != prev_visibles || rbm.hiddens != prev_hiddens) && ctr < k
+
+        @show energy(rbm)
+
+        prev_visibles = rbm.visibles
+        prev_hiddens = rbm.hiddens
+
+        rbm(input)
+        rbm()
+
+        input = rbm.visibles
+
+        ctr +=1
+
+    end
+
+input
+end
