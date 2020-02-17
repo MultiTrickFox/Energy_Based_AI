@@ -28,7 +28,7 @@ data_train = [e[1] for e in data_train]
 data_dev = [e[1] for e in data_dev]
 
 
-fn_01_to_minus1plus1 = x->(x*2)-1
+fn_01_to_minus1plus1 = x->(x.*2).-1
 
 data_train = fn_01_to_minus1plus1.(data_train)
 data_dev = fn_01_to_minus1plus1.(data_dev)
