@@ -1,10 +1,10 @@
 include("utils.jl")
 
 
-binary = true
+binary = false
 
 
-binarize_data(x) = round(x) == 0 ? -1 : 1
+binarize_data(x) = round(x) <= 0 ? -1 : 1
 
 binarize_state(x) = x > 0 ? 1 : -1
 

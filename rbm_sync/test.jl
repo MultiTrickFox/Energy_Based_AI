@@ -5,6 +5,10 @@
 include("interact.jl")
 
 
+data_train = [e == 0 ? -1 : e for e in data_train]
+data_dev = [e == 0 ? -1 : e for e in data_dev]
+
+
 ##
 
 
@@ -13,7 +17,7 @@ test_basic() = begin
 
     rbm = RBM(10, 12)
 
-    datapoint = binarize_data.(rand(1,10)) # data_train[1]
+    datapoint = binarize_data.(rand(1,10))
 
 
     inp = datapoint
@@ -82,7 +86,7 @@ test_hiddensizes() = begin
 
     hidden_sizes = 1:12
 
-    results = [0 for _ in hidden_sizes]
+    results = [.0 for _ in hidden_sizes]
 
     for _ in 1:hm_avg
 
@@ -96,12 +100,13 @@ test_hiddensizes() = begin
 
     results = [e/hm_avg for e in results]
 
-    for (hs,res) in zip(hidden_sizes, results)
+    # for (hs,res) in zip(hidden_sizes, results)
+    #
+    #     println("$(hs): $(res)")
+    #
+    # end
 
-        println("$(hs): $(res)")
-
-    end
-
+results
 end ; #test_hiddensizes()
 
 
