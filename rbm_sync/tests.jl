@@ -12,14 +12,32 @@ model = nothing
 
 main() = begin
 
-    global model ; model = RBM(in_size, 10)
+    global model
 
-    batch = [data_train[1], data_train[2]]
 
-    update_weights!(model, batch_grads(rbm, batch), 1)
+    model = RBM(in_size, 10)
+
+    train(rbm=model,batch_size=int(length(data_train)/2))
 
     generate(model)
 
+
+    results = []
+
+    for _ in 1:10
+
+        model = RBM(in_size, 10)
+
+        batch = choices(data_train,1)
+
+        update_weights!(model, batch_grads(model, batch), 1)
+
+        push!(results, generate(model)) ; display(results[end]) ; display(generate(model))
+
+    end
+
+
+results
 end
 
 

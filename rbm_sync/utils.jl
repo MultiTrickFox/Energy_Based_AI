@@ -109,7 +109,7 @@ choice(arr) = arr[randn(1:length(arr))]
 
 using Random: randperm
 
-choices(arr,n) = arr[randperm(length(arr))[1:n]]
+choices(arr,n;detailed=true) = detailed ? arr[randperm(length(arr))[1:n]] : shuffle(arr)[1:n]
 
 
 enum(arr) = enumerate(arr)

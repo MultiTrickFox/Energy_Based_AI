@@ -96,7 +96,7 @@ using Knet: relu
 using Images: Gray
 
 
-generate(rbm;hidden_state=nothing) =
+generate(rbm;hidden_state=nothing,converge=false) =
 begin
 
     if hidden_state == nothing
@@ -113,9 +113,9 @@ begin
 
     rbm()
 
-    propogate_until_convergence!(rbm, rbm.visibles)
+    converge ? propogate_until_convergence!(rbm, rbm.visibles) : ()
 
-    Gray.(reshape(relu.(rbm.visibles), (int(sqrt(in_size)),int(sqrt(in_size)))))
+    Gray.(reshape(relu.(rbm.visibles), (int(sqrt(in_size)),int(sqrt(in_size))))')
 
 end
 
