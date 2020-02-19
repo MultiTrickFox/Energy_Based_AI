@@ -8,6 +8,24 @@ include("interact.jl")
 ##
 
 
+model = nothing
+
+main() = begin
+
+    global model ; model = RBM(in_size, 10)
+
+    batch = [data_train[1], data_train[2]]
+
+    update_weights!(model, batch_grads(rbm, batch), 1)
+
+    generate(model)
+
+end
+
+
+##
+
+
 test_basic() = begin
 
 
@@ -42,7 +60,10 @@ test_basic() = begin
 end ; #test_basic()
 
 
-test_hiddensizes() = begin
+##
+
+
+test_bestsize() = begin
 
     hm_avg = 100
 
@@ -54,48 +75,27 @@ test_hiddensizes() = begin
 
         for (i,hs) in enum(hidden_sizes)
 
-            results[i] = (results[i] * (ii-1) + train(hidden_size=hs,hm_epochs=1)[end][end][end]) / ii
+            results[i] = (results[i] * (ii-1) + train(hidden_size=hs,hm_epochs=1,do_print=false)[end][end][end]) / ii
 
         end
 
-        println("iteration: $(ii), lowest loss: $(hidden_sizes[argmin(results)])")
+        println("iteration: $(ii), results:")
+        for (hs, res) in zip(hidden_sizes, results)
+            println("\thidden_size: $(hs), loss: $(res)")
+        end
+        println("minimum loss: $(hidden_sizes[argmin(results)]) - $(argmin(results))")
 
     end
-
-    # results = [e/hm_avg for e in results]
 
     println("Final Results:")
-
     for (hs,res) in zip(hidden_sizes, results)
-
         println("\t$(hs): $(res)")
-
     end
 
-end ; #test_hiddensizes()
+end ; #test_bestsize()
 
 
 ##
 
 
-# main() = begin
-#
-#     for i in 1:10
-#
-#         @info "Global Iteration g$(i)"
-#
-#         for hs in [2,4,8,10,16,32]
-#
-#             #rbm = RBM(in_size, hs)
-#
-#             for lr in [1,.8,.6,.4,.2,.1]
-#
-#                 train(hidden_size=hs,learning_rate=lr)#,rbm=deepcopy(rbm))
-#
-#             end
-#
-#         end
-#
-#     end
-#
-# end; main()
+; main()

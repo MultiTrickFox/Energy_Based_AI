@@ -6,7 +6,7 @@ binary = false
 
 binarize_data(x) = round(x) <= 0 ? -1 : 1
 
-binarize_state(x) = x > 0 ? 1 : -1
+binarize_state(x) = x <= 0 ? -1 : 1
 
 
 ##
@@ -101,8 +101,6 @@ begin
     ctr = 0
 
     while (rbm.visibles != prev_visibles || rbm.hiddens != prev_hiddens) && ctr < k
-
-        @show energy(rbm)
 
         prev_visibles = rbm.visibles
         prev_hiddens = rbm.hiddens

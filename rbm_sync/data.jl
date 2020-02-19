@@ -33,6 +33,7 @@ fn_01_to_minus1plus1 = x->(x.*2).-1
 data_train = fn_01_to_minus1plus1.(data_train)
 data_dev = fn_01_to_minus1plus1.(data_dev)
 
+
 # try
 
     if binary
@@ -45,52 +46,3 @@ data_dev = fn_01_to_minus1plus1.(data_dev)
 #     println("Warning: data.jl imported before rbm.jl")
 #
 # end
-
-
-
-# step_fn(x) =
-#     if x > 0
-#         1
-#     else
-#         0
-#     end
-#
-# data_train = [step_fn.(e) for e in data_train]
-# data_dev = [step_fn.(e) for e in data_dev]
-
-
-
-# data_train = collect(zip(xtrn, ytrn))
-# data_dev = collect(zip(xtst, ytst))
-
-# data_train = xtrn
-# data_test = xtst
-
-
-# using Knet,GZip,Compat
-#
-#
-# function loaddata()
-#     xtrn = gzload("train-images-idx3-ubyte.gz")[17:end]
-#     xtst = gzload("t10k-images-idx3-ubyte.gz")[17:end]
-#     ytrn = gzload("train-labels-idx1-ubyte.gz")[9:end]
-#     ytst = gzload("t10k-labels-idx1-ubyte.gz")[9:end]
-#     xtrn,ytrn,xtst,ytst
-# end
-#
-# function gzload(file; path=Knet.dir("data",file), url="http://yann.lecun.com/exdb/mnist/$file")
-#     isfile(path) || download(url, path)
-#     f = gzopen(path)
-#     a = @compat read(f)
-#     close(f)
-#     return(a)
-# end
-#
-#
-# data = loaddata()
-#
-# data_train = data[1]
-# data_dev = data[3]
-#
-#
-# @show typeof(data_train[1])

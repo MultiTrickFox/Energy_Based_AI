@@ -11,13 +11,14 @@ using Plots: plot, plot!
 train(;rbm            = nothing,
        hidden_size    = 10,
        learning_rate  = 1,
-       hm_epochs      = 10,
+       hm_epochs      = 1,
        batch_size     = length(data_train),
+       do_print       = true
       ) =
 begin
 
 
-    @info "Starting training... \nhidden size   $(hidden_size) \nlearning rate $(learning_rate) \nbatch size    $(batch_size)"
+    do_print ? (@info "Starting training... \nhidden size   $(hidden_size) \nlearning rate $(learning_rate) \nbatch size    $(batch_size)") : ()
 
 
     rbm == nothing ?
@@ -32,10 +33,13 @@ begin
     test_grad_sums  = []
 
 
-    dev_grads = batch_grads(rbm, data_dev)
+    do_print ? (begin
 
-    println("initial dev norm $(norm(dev_grads))")
-    println("initial dev sum $(sum(abs.(dev_grads)))")
+        dev_grads = batch_grads(rbm, data_dev)
+        println("initial dev norm $(norm(dev_grads))")
+        println("initial dev sum $(sum(abs.(dev_grads)))")
+
+    end) : ()
 
 
     for ep in 1:hm_epochs
@@ -48,23 +52,20 @@ begin
 
             update_weights!(rbm, grads, learning_rate)
 
-
             total_grads == nothing ? total_grads = grads : total_grads += grads
 
-
         end
+
+        dev_grads = batch_grads(rbm, data_dev)
 
 
         push!(grad_norms, norm(total_grads)./sqrt(hidden_size))
         push!(grad_sums, sum(abs.(total_grads))./hidden_size)
-
-        dev_grads = batch_grads(rbm, data_dev)
-
         push!(test_grad_norms, norm(dev_grads)./sqrt(hidden_size))
         push!(test_grad_sums, sum(abs.(dev_grads))./hidden_size)
 
 
-        println("Epoch $ep, train_sum $(round(grad_sums[end],digits=3)), dev_sum $(round(test_grad_sums[end],digits=3))")
+        do_print ? println("Epoch $ep, train_sum $(round(grad_sums[end],digits=3)), dev_sum $(round(test_grad_sums[end],digits=3))") : ()
 
 
     end
@@ -92,6 +93,9 @@ end
 
 using Knet: relu
 
+using Images: Gray
+
+
 generate(rbm;hidden_state=nothing) =
 begin
 
@@ -99,7 +103,7 @@ begin
 
         random_states = randn(1,length(rbm.hiddens))
 
-        binary ? random_states = binarize-state.(random_states) : ()
+        binary ? random_states = binarize_state.(random_states) : ()
 
         hidden_state = random_states
 
@@ -111,7 +115,8 @@ begin
 
     propogate_until_convergence!(rbm, rbm.visibles)
 
-reshape(relu.(rbm.visibles), (1, int(sqrt(in_size)),int(sqrt(in_size))))
+    Gray.(reshape(relu.(rbm.visibles), (int(sqrt(in_size)),int(sqrt(in_size)))))
+
 end
 
 
