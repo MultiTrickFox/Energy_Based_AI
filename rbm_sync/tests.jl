@@ -8,18 +8,27 @@ include("interact.jl")
 ##
 
 
-model = nothing
+rbm = nothing
 
 main() = begin
 
-    global model
+    global rbm
 
 
-    model = RBM(in_size, 16)
+    rbm = RBM(in_size, 32)
 
-    train(rbm=model,batch_size=100)
+    train(rbm=rbm,batch_size=100,learning_rate=1)
 
-    generate(model)
+    # generate(model)
+
+
+    while true
+
+        display(generate(rbm))
+
+        sleep(1)
+
+    end
 
 
     results = []
