@@ -18,12 +18,12 @@ train(;rbm            = nothing,
 begin
 
 
-    do_print ? (@info "Starting training... \nhidden size   $(hidden_size) \nlearning rate $(learning_rate) \nbatch size    $(batch_size)") : ()
-
-
     rbm == nothing ?
         rbm = RBM(in_size,hidden_size) :
-            ()
+            hidden_size = length(rbm.hiddens)
+
+
+    do_print ? (@info "Training started. \nhidden size   $(hidden_size) \nlearning rate $(learning_rate) \nbatch size    $(batch_size)") : ()
 
 
     grad_norms      = []
@@ -96,7 +96,7 @@ using Knet: relu
 using Images: Gray
 
 
-generate(rbm;hidden_state=nothing,converge=false) =
+generate(rbm;hidden_state=nothing,converge=true) =
 begin
 
     if hidden_state == nothing

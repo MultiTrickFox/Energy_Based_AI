@@ -15,26 +15,24 @@ main() = begin
     global model
 
 
-    model = RBM(in_size, 10)
+    model = RBM(in_size, 16)
 
-    train(rbm=model,batch_size=int(length(data_train)/2))
+    train(rbm=model,batch_size=100)
 
     generate(model)
 
 
     results = []
 
-    for _ in 1:10
-
-        model = RBM(in_size, 10)
-
-        batch = choices(data_train,1)
-
-        update_weights!(model, batch_grads(model, batch), 1)
-
-        push!(results, generate(model)) ; display(results[end]) ; display(generate(model))
-
-    end
+    # for _ in 1:10
+    #
+    #     model = RBM(in_size, 1)
+    #
+    #     update_weights!(model, batch_grads(model, choices(data_train,1)), 1)
+    #
+    #     push!(results, generate(model)) # ; display(results[end]) ; display(generate(model))
+    #
+    # end
 
 
 results
@@ -116,4 +114,4 @@ end ; #test_bestsize()
 ##
 
 
-; main()
+; results = main()
