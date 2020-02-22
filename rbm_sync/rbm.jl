@@ -51,45 +51,10 @@ begin
 end
 
 
-
-update_weights!(rbm, grads, lr) =
-begin
-
-    rbm.weights += lr .* grads
-
-end
-
-
-
-alternating_gibbs_grads!(rbm, input; k=1) =
-begin
-
-    rbm(input)
-
-    pos_hiddens = rbm.hiddens
-
-    for _ in 1:k
-
-        rbm()
-
-        rbm(rbm.visibles)
-
-    end
-
-    grads = (transpose(input) * pos_hiddens) .- (transpose(rbm.visibles) * rbm.hiddens)
-
-grads
-end
-
-
-batch_grads(rbm, batch) = threadpool(sum, args->alternating_gibbs_grads!(args...), [[deepcopy(rbm), input] for input in batch]) ./ length(batch)
-
-
 ##
 
 
 energy(rbm) = -(rbm.visibles * rbm.weights * rbm.hiddens')
-
 
 
 propogate_until_convergence!(rbm, input; k=1_000) =
@@ -116,3 +81,51 @@ begin
 
 input
 end
+
+
+##
+
+
+alternating_gibbs_grads!(rbm, input; converge=true, k=1) =
+begin
+
+    rbm(input)
+
+    pos_hiddens = rbm.hiddens
+
+    if converge
+
+        rbm()
+
+        propogate_until_convergence!(rbm, rbm.visibles)
+
+    else
+
+        for _ in 1:k
+
+            rbm()
+
+            rbm(rbm.visibles)
+
+        end
+
+    end
+
+    grads = (transpose(input) * pos_hiddens) .- (transpose(rbm.visibles) * rbm.hiddens)
+
+grads
+end
+
+
+batch_grads(rbm, batch) = threadpool(sum, args->alternating_gibbs_grads!(args...), [[deepcopy(rbm), input] for input in batch]) ./ length(batch)
+
+
+update_weights!(rbm, grads, lr) =
+begin
+
+    rbm.weights += lr .* grads
+
+end
+
+
+##
