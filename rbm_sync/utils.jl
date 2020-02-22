@@ -105,7 +105,7 @@ str(nr) = "$(nr)"
 
 using Random: shuffle, shuffle!
 
-choice(arr) = arr[randn(1:length(arr))]
+choice(arr) = arr[rand(1:length(arr))]
 
 using Random: randperm
 
