@@ -59,10 +59,10 @@ begin
         dev_grads = batch_grads(rbm, data_dev)
 
 
-        push!(grad_norms, norm(total_grads)./sqrt(hidden_size))
-        push!(grad_sums, sum(abs.(total_grads))./hidden_size)
-        push!(test_grad_norms, norm(dev_grads)./sqrt(hidden_size))
-        push!(test_grad_sums, sum(abs.(dev_grads))./hidden_size)
+        push!(grad_norms, norm(total_grads)./sqrt(length(rbm.weights)))
+        push!(grad_sums, sum(abs.(total_grads))./length(rbm.weights))
+        push!(test_grad_norms, norm(dev_grads)./sqrt(length(rbm.weights)))
+        push!(test_grad_sums, sum(abs.(dev_grads))./length(rbm.weights))
 
 
         do_print ? println("Epoch $ep, train_sum $(round(grad_sums[end],digits=3)), dev_sum $(round(test_grad_sums[end],digits=3))") : ()
