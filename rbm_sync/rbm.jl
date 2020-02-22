@@ -105,12 +105,12 @@ begin
         prev_visibles = rbm.visibles
         prev_hiddens = rbm.hiddens
 
+        ctr +=1
+
         rbm(input)
         rbm()
 
         input = rbm.visibles
-
-        ctr +=1
 
     end
 
