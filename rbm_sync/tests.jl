@@ -8,6 +8,25 @@ include("interact.jl")
 ##
 
 
+run_main     = true
+
+display_loop = true
+
+
+##
+
+
+hidden_size       = 64
+
+batch_size        = 100
+learning_rate     = 1
+
+generate_converge = true
+
+
+##
+
+
 rbm = nothing
 
 main() = begin
@@ -15,16 +34,16 @@ main() = begin
     global rbm
 
 
-    rbm = RBM(in_size, 32)
+    rbm = RBM(in_size, hidden_size)
 
-    train(rbm=rbm,batch_size=100,learning_rate=1)
+    train(rbm=rbm,batch_size=batch_size,learning_rate=learning_rate)
 
     # generate(model)
 
 
-    while true
+    while display_loop
 
-        display(generate(rbm))
+        display(generate(rbm,converge=generate_converge))
 
         sleep(1)
 
@@ -123,4 +142,4 @@ end ; #test_bestsize()
 ##
 
 
-; results = main()
+; run_main ? results = main() : ()
