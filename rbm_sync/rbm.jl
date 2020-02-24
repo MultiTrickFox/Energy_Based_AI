@@ -86,7 +86,7 @@ end
 ##
 
 
-alternating_gibbs_grads!(rbm, input; converge=true, k=1) =
+alternating_gibbs_grads!(rbm, input; converge=false, k=1) =
 begin
 
     rbm(input)

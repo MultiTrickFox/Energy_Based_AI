@@ -3,6 +3,9 @@ include("rbm.jl")
 include("data.jl")
 
 
+##
+
+
 using Knet: norm
 
 using Plots: plot, plot!
@@ -29,15 +32,14 @@ begin
     grad_norms      = []
     grad_sums       = []
 
-    test_grad_norms = []
-    test_grad_sums  = []
+    dev_grad_norms = []
+    dev_grad_sums  = []
 
 
     do_print ? (begin
 
         dev_grads = batch_grads(rbm, data_dev)
-        println("initial dev norm $(norm(dev_grads))")
-        println("initial dev sum $(sum(abs.(dev_grads)))")
+        @info "initial dev stats \nnorm $(norm(dev_grads)./sqrt(length(rbm.weights))) \nsum $(sum(abs.(dev_grads))./length(rbm.weights))"
 
     end) : ()
 
@@ -61,11 +63,11 @@ begin
 
         push!(grad_norms, norm(total_grads)./sqrt(length(rbm.weights)))
         push!(grad_sums, sum(abs.(total_grads))./length(rbm.weights))
-        push!(test_grad_norms, norm(dev_grads)./sqrt(length(rbm.weights)))
-        push!(test_grad_sums, sum(abs.(dev_grads))./length(rbm.weights))
+        push!(dev_grad_norms, norm(dev_grads)./sqrt(length(rbm.weights)))
+        push!(dev_grad_sums, sum(abs.(dev_grads))./length(rbm.weights))
 
 
-        do_print ? println("Epoch $ep, train_sum $(round(grad_sums[end],digits=3)), dev_sum $(round(test_grad_sums[end],digits=3))") : ()
+        do_print ? println("Epoch $ep, train_sum $(round(grad_sums[end],digits=3)), dev_sum $(round(dev_grad_sums[end],digits=3))") : ()
 
 
     end
@@ -73,25 +75,23 @@ begin
 
     min_train_norm = argmin(grad_norms)
     min_train_sum = argmin(grad_sums)
-    min_dev_norm = argmin(test_grad_norms)
-    min_dev_sum = argmin(test_grad_sums)
+    min_dev_norm = argmin(dev_grad_norms)
+    min_dev_sum = argmin(dev_grad_sums)
 
     p1 = plot(1:hm_epochs, grad_norms,     title="train_norm_$(hidden_size)_$(learning_rate)_$(batch_size)",xlabel="$(grad_norms[min_train_norm]) / $(min_train_norm)")
     p2 = plot(1:hm_epochs, grad_sums,      title="train_sum_$(hidden_size)_$(learning_rate)_$(batch_size)",xlabel="$(grad_sums[min_train_sum]) / $(min_train_sum)")
-    p3 = plot(1:hm_epochs, test_grad_norms,title="dev_norm_$(hidden_size)_$(learning_rate)_$(batch_size)",xlabel="$(test_grad_norms[min_dev_norm]) / $(min_dev_norm)")
-    p4 = plot(1:hm_epochs, test_grad_sums, title="dev_sum_$(hidden_size)_$(learning_rate)_$(batch_size)",xlabel="$(test_grad_sums[min_dev_sum]) / $(min_dev_sum)")
+    p3 = plot(1:hm_epochs, dev_grad_norms, title="dev_norm_$(hidden_size)_$(learning_rate)_$(batch_size)",xlabel="$(dev_grad_norms[min_dev_norm]) / $(min_dev_norm)")
+    p4 = plot(1:hm_epochs, dev_grad_sums,  title="dev_sum_$(hidden_size)_$(learning_rate)_$(batch_size)",xlabel="$(dev_grad_sums[min_dev_sum]) / $(min_dev_sum)")
 
     display(plot(p1,p2,p3,p4,layout=(2,2)))
 
 
-rbm, [grad_norms,grad_sums,test_grad_norms,test_grad_sums]
+rbm, [grad_norms,grad_sums,dev_grad_norms,dev_grad_sums]
 end
 
 
 ##
 
-
-using Knet: relu
 
 using Images: Gray
 
@@ -115,9 +115,92 @@ begin
 
     converge ? propogate_until_convergence!(rbm, rbm.visibles) : ()
 
-    Gray.(reshape(relu.(rbm.visibles), (int(sqrt(in_size)),int(sqrt(in_size))))')
-
+Gray.(reshape((rbm.visibles.+1)./2, (int(sqrt(in_size)),int(sqrt(in_size))))')
 end
 
 
 ##
+
+
+train2(;rbm            = nothing,
+        hidden_size    = 10,
+        learning_rate  = 1,
+        hm_epochs      = 1,
+        hm_batches     = 1,
+        do_print       = true
+       ) =
+begin
+
+
+    rbm == nothing ?
+        rbm = RBM(in_size,hidden_size) :
+            hidden_size = length(rbm.hiddens)
+
+
+    do_print ? (@info "Training started. \nhidden size   $(hidden_size) \nlearning rate $(learning_rate) \nhm batches    $(hm_batches)") : ()
+
+
+    grad_norms      = []
+    grad_sums       = []
+
+    dev_grad_norms = []
+    dev_grad_sums  = []
+
+
+    do_print ? (begin
+
+        dev_grads = batch_grads(rbm, data_dev)
+        @info "initial dev stats \nnorm $(norm(dev_grads)./sqrt(length(rbm.weights))) \nsum $(sum(abs.(dev_grads))./length(rbm.weights))"
+
+    end) : ()
+
+
+    make_special_batches(hm_batches) =
+
+        zip([choices(data_train2[class_ctr], hm_batches) for class_ctr in 1:10]...)
+
+
+    for ep in 1:hm_epochs
+
+        total_grads = nothing
+
+        for batch in make_special_batches(hm_batches)
+
+            grads = batch_grads(rbm, batch)
+
+            update_weights!(rbm, grads, learning_rate)
+
+            total_grads == nothing ? total_grads = grads : total_grads += grads
+
+        end
+
+        dev_grads = batch_grads(rbm, data_dev)
+
+
+        push!(grad_norms, norm(total_grads)./sqrt(length(rbm.weights)))
+        push!(grad_sums, sum(abs.(total_grads))./length(rbm.weights))
+        push!(dev_grad_norms, norm(dev_grads)./sqrt(length(rbm.weights)))
+        push!(dev_grad_sums, sum(abs.(dev_grads))./length(rbm.weights))
+
+
+        do_print ? println("Epoch $ep, train_sum $(round(grad_sums[end],digits=3)), dev_sum $(round(dev_grad_sums[end],digits=3))") : ()
+
+
+    end
+
+
+    min_train_norm = argmin(grad_norms)
+    min_train_sum = argmin(grad_sums)
+    min_dev_norm = argmin(dev_grad_norms)
+    min_dev_sum = argmin(dev_grad_sums)
+
+    p1 = plot(1:hm_epochs, grad_norms,     title="train_norm_$(hidden_size)_$(learning_rate)_$(hm_batches)",xlabel="$(grad_norms[min_train_norm]) / $(min_train_norm)")
+    p2 = plot(1:hm_epochs, grad_sums,      title="train_sum_$(hidden_size)_$(learning_rate)_$(hm_batches)",xlabel="$(grad_sums[min_train_sum]) / $(min_train_sum)")
+    p3 = plot(1:hm_epochs, dev_grad_norms, title="dev_norm_$(hidden_size)_$(learning_rate)_$(hm_batches)",xlabel="$(dev_grad_norms[min_dev_norm]) / $(min_dev_norm)")
+    p4 = plot(1:hm_epochs, dev_grad_sums,  title="dev_sum_$(hidden_size)_$(learning_rate)_$(hm_batches)",xlabel="$(dev_grad_sums[min_dev_sum]) / $(min_dev_sum)")
+
+    display(plot(p1,p2,p3,p4,layout=(2,2)))
+
+
+rbm, [grad_norms,grad_sums,dev_grad_norms,dev_grad_sums]
+end

@@ -1,9 +1,14 @@
 using Knet: dir ; include(dir("data","mnist.jl"))
 
-nist = mnist()
+nist = mnist() ; binary = false
+
 
 data_train = []
 data_dev  = []
+
+data_train2 = [[] for _ in 1:10]
+data_dev2 = [[] for _ in 1:10]
+
 
 in_size = 28*28
 
@@ -15,34 +20,29 @@ begin
 lbl
 end
 
+fn_01_to_minus1plus1 = x->(x.*2).-1
+
+
 for i in 1:size(nist[1])[end]
-    push!(data_train, (reshape(nist[1][:,:,:,i], 1, in_size),to_label(nist[2][i])))
+    sample = reshape(nist[1][:,:,:,i], 1, in_size)
+    sample = fn_01_to_minus1plus1(sample)
+    binary ? sample = binarize_data(sample) : ()
+    push!(data_train, sample)
+    push!(data_train2[nist[2][i]], sample)
+    # push!(data_train, (reshape(nist[1][:,:,:,i], 1, in_size),to_label(nist[2][i])))
 end ;
 
 for i in 1:size(nist[3])[end]
-    push!(data_dev, (reshape(nist[3][:,:,:,i], 1, in_size),to_label(nist[4][i])))
+    sample = reshape(nist[3][:,:,:,i], 1, in_size)
+    sample = fn_01_to_minus1plus1(sample)
+    binary ? sample = binarize_data(sample) : ()
+    push!(data_dev, sample)
+    push!(data_dev2[nist[4][i]], sample)
+    # push!(data_dev, (reshape(nist[3][:,:,:,i], 1, in_size),to_label(nist[4][i])))
 end ;
 
 
-data_train = [e[1] for e in data_train]
-data_dev = [e[1] for e in data_dev]
-
-
-fn_01_to_minus1plus1 = x->(x.*2).-1
-
-data_train = fn_01_to_minus1plus1.(data_train)
-data_dev = fn_01_to_minus1plus1.(data_dev)
-
-
-# try
-
-    if binary
-        data_train = [binarize_data.(e) for e in data_train]
-        data_dev = [binarize_data.(e) for e in data_dev]
-    end
-
-# catch
-#
-#     println("Warning: data.jl imported before rbm.jl")
-#
+# for class_data in data_train2
+#     @show length(class_data)
 # end
+##
