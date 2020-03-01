@@ -126,7 +126,7 @@ train2(;rbm            = nothing,
         hidden_size    = 10,
         learning_rate  = 1,
         hm_epochs      = 1,
-        hm_batches     = 1,
+        batch_size     = 10,
         do_print       = true
        ) =
 begin
@@ -137,7 +137,7 @@ begin
             hidden_size = length(rbm.hiddens)
 
 
-    do_print ? (@info "Training started. \nhidden size   $(hidden_size) \nlearning rate $(learning_rate) \nhm batches    $(hm_batches)") : ()
+    do_print ? (@info "Training started. \nhidden size   $(hidden_size) \nlearning rate $(learning_rate) \nbatch size    $(batch_size)") : ()
 
 
     grad_norms      = []
@@ -155,16 +155,23 @@ begin
     end) : ()
 
 
-    make_special_batches(hm_batches) =
+    make_special_batches = ()->
+    begin
 
-        zip([choices(data_train2[class_ctr], hm_batches) for class_ctr in 1:10]...)
+        batch_size = int(batch_size/10) * 10
+        class_sizes = [length(class_data) for class_data in data_train2]
+        smallest_class_size = class_sizes[argmin(class_sizes)]
+        hm_batches = int(smallest_class_size/batch_size)
+        batchify(vcat([sample for batch in collect(zip([choices(data_train2[class_ctr], hm_batches*int(batch_size/10)) for class_ctr in 1:10]...)) for sample in batch]), batch_size)
+
+    end
 
 
     for ep in 1:hm_epochs
 
         total_grads = nothing
 
-        for batch in make_special_batches(hm_batches)
+        for batch in make_special_batches()
 
             grads = batch_grads(rbm, batch)
 
@@ -194,10 +201,10 @@ begin
     min_dev_norm = argmin(dev_grad_norms)
     min_dev_sum = argmin(dev_grad_sums)
 
-    p1 = plot(1:hm_epochs, grad_norms,     title="train_norm_$(hidden_size)_$(learning_rate)_$(hm_batches)",xlabel="$(grad_norms[min_train_norm]) / $(min_train_norm)")
-    p2 = plot(1:hm_epochs, grad_sums,      title="train_sum_$(hidden_size)_$(learning_rate)_$(hm_batches)",xlabel="$(grad_sums[min_train_sum]) / $(min_train_sum)")
-    p3 = plot(1:hm_epochs, dev_grad_norms, title="dev_norm_$(hidden_size)_$(learning_rate)_$(hm_batches)",xlabel="$(dev_grad_norms[min_dev_norm]) / $(min_dev_norm)")
-    p4 = plot(1:hm_epochs, dev_grad_sums,  title="dev_sum_$(hidden_size)_$(learning_rate)_$(hm_batches)",xlabel="$(dev_grad_sums[min_dev_sum]) / $(min_dev_sum)")
+    p1 = plot(1:hm_epochs, grad_norms,     title="train_norm_$(hidden_size)_$(learning_rate)_$(batch_size)",xlabel="$(grad_norms[min_train_norm]) / $(min_train_norm)")
+    p2 = plot(1:hm_epochs, grad_sums,      title="train_sum_$(hidden_size)_$(learning_rate)_$(batch_size)",xlabel="$(grad_sums[min_train_sum]) / $(min_train_sum)")
+    p3 = plot(1:hm_epochs, dev_grad_norms, title="dev_norm_$(hidden_size)_$(learning_rate)_$(batch_size)",xlabel="$(dev_grad_norms[min_dev_norm]) / $(min_dev_norm)")
+    p4 = plot(1:hm_epochs, dev_grad_sums,  title="dev_sum_$(hidden_size)_$(learning_rate)_$(batch_size)",xlabel="$(dev_grad_sums[min_dev_sum]) / $(min_dev_sum)")
 
     display(plot(p1,p2,p3,p4,layout=(2,2)))
 

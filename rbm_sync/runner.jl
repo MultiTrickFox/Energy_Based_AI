@@ -20,6 +20,7 @@ hidden_size   = 32
 
 batch_size    = 50
 learning_rate = 1
+hm_epochs     = 1
 
 generate_converge = true
 
@@ -36,8 +37,8 @@ main() = begin
 
     rbm = RBM(in_size, hidden_size)
 
-    #train(rbm=rbm,batch_size=batch_size,learning_rate=learning_rate,hm_epochs=1)
-    train2(rbm=rbm,hm_batches=5_000,learning_rate=.5,hm_epochs=1)
+    #train(rbm=rbm,batch_size=batch_size,learning_rate=learning_rate,hm_epochs=hm_epochs)
+    train2(rbm=rbm,batch_size=10,learning_rate=1,hm_epochs=hm_epochs)
 
     # generate(model)
 

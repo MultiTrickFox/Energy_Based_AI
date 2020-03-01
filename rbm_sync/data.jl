@@ -42,7 +42,4 @@ for i in 1:size(nist[3])[end]
 end ;
 
 
-# for class_data in data_train2
-#     @show length(class_data)
-# end
 ##
