@@ -115,6 +115,12 @@ begin
 
     converge ? propogate_until_convergence!(rbm, rbm.visibles) : ()
 
+    std_transform ? (begin
+        reconstruct!(std2, rbm.visibles)
+        reconstruct!(std1, rbm.visibles)
+    end) : ()
+
+
 Gray.(reshape((rbm.visibles.+1)./2, (int(sqrt(in_size)),int(sqrt(in_size))))')
 end
 
@@ -155,13 +161,12 @@ begin
     end) : ()
 
 
-    make_special_batches = ()->
+    make_equalified_batches = ()->
     begin
 
         batch_size = int(batch_size/10) * 10
         class_sizes = [length(class_data) for class_data in data_train2]
-        smallest_class_size = class_sizes[argmin(class_sizes)]
-        hm_batches = int(smallest_class_size/batch_size)
+        hm_batches = int(class_sizes[argmin(class_sizes)]/batch_size)
         batchify(vcat([sample for batch in collect(zip([choices(data_train2[class_ctr], hm_batches*int(batch_size/10)) for class_ctr in 1:10]...)) for sample in batch]), batch_size)
 
     end
@@ -171,7 +176,7 @@ begin
 
         total_grads = nothing
 
-        for batch in make_special_batches()
+        for batch in make_equalified_batches()
 
             grads = batch_grads(rbm, batch)
 
