@@ -116,12 +116,26 @@ begin
     converge ? propogate_until_convergence!(rbm, rbm.visibles) : ()
 
     std_transform ? (begin
-        reconstruct!(std2, rbm.visibles)
-        reconstruct!(std1, rbm.visibles)
+
+        rbm.visibles = StatsBase.reconstruct(transform3, rbm.visibles)
+
+        pca_transform ? (begin
+
+            rbm.visibles = MultivariateStats.reconstruct(transform2, rbm.visibles')'
+
+        end) : (begin
+
+            rbm.visibles = StatsBase.reconstruct(transform1, rbm.visibles)
+
+        end)
+
+        # reconstruct!(std2, rbm.visibles)
+        # reconstruct!(std1, rbm.visibles)
+
     end) : ()
 
 
-Gray.(reshape((rbm.visibles.+1)./2, (int(sqrt(in_size)),int(sqrt(in_size))))')
+Gray.(reshape((rbm.visibles.+1)./2, (28,28))')
 end
 
 

@@ -2,6 +2,7 @@ in_size = 28 * 28
 
 
 std_transform = true
+pca_transform = true
 
 
 ##
@@ -34,26 +35,48 @@ nist = [
        ]
 
 
-using StatsBase: standardize, fit, transform, reconstruct!
-using StatsBase: ZScoreTransform, UnitRangeTransform
 
-# nist[1] = standardize(ZScoreTransform,nist[1],dims=1)
-# nist[3] = standardize(ZScoreTransform,nist[3],dims=1)
-#
-# nist[1] = standardize(UnitRangeTransform,nist[1],dims=1)
-# nist[3] = standardize(UnitRangeTransform,nist[3],dims=1)
+import StatsBase
+# using StatsBase: fit, transform, reconstruct
+# using StatsBase: ZScoreTransform, UnitRangeTransform
+
+import MultivariateStats
+# using MultivariateStats: fit, transform, reconstruct
+# using MultivariateStats: PCA, outdim
+
 
 std_transform ? (begin
 
-    std1 = fit(ZScoreTransform, vcat(nist[1],nist[3]),dims=1)
-    nist[1] = transform(std1,nist[1])
-    nist[3] = transform(std1,nist[3])
 
-    @show nist[1]
+    training_and_test = vcat(nist[1],nist[3])
 
-    std2 = fit(UnitRangeTransform, vcat(nist[1],nist[3]),dims=1)
-    nist[1] = transform(std2,nist[1])
-    nist[3] = transform(std2,nist[3])
+
+    pca_transform ? (begin
+
+        transform2 = MultivariateStats.fit(MultivariateStats.PCA, training_and_test', maxoutdim=in_size, pratio=1.0)
+        training_and_test = MultivariateStats.transform(transform2,training_and_test')'
+
+        in_size = MultivariateStats.outdim(transform2)
+
+    end) : (begin
+
+        transform1 = StatsBase.fit(StatsBase.ZScoreTransform, training_and_test,dims=1)
+        training_and_test = StatsBase.transform(transform1,training_and_test)
+
+        for e in training_and_test # TODO : find out why and remove me.
+            if isnan(e)
+                println("nan detected. transform1")
+            end
+        end
+
+    end)
+
+    transform3 = StatsBase.fit(StatsBase.UnitRangeTransform, training_and_test,dims=1)
+    traning_and_test = StatsBase.transform(transform3,training_and_test)
+
+
+    nist[1] = training_and_test[1:size(nist[1])[1],:]
+    nist[3] = training_and_test[size(nist[1])[1]+1:end,:]
 
 end) : ()
 
@@ -66,6 +89,7 @@ lbl
 end
 
 fn_01_to_minus1plus1 = x->(x.*2).-1
+
 
 
 data_train = []
